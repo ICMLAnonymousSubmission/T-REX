@@ -7,6 +7,15 @@ from src.datasets.Pvoc import PvocAttentionDataset,PvocClassificationDataset
 from src.datasets.scene import SceneClassificationDataset,SceneClassificationAttentionDataset
 
 def get_config(args):
+    """
+    Function to generate config file and dataset
+
+    Args:
+        args (argparser): argparser with config_file 
+
+    Returns:
+        config, dataset - python config class, Dataset for training
+    """
     if args.config_file == 'gender':
         config = ResNetGenderMC()
         return config,GenderClassificationDataset(
@@ -29,6 +38,15 @@ def get_config(args):
 
 
 def get_config_original(args):
+    """
+    Function to generate config file and eval dataset
+
+    Args:
+        args (argparser): argparser with config_file 
+
+    Returns:
+        config, dataset - python config class, Dataset for evaluation
+    """
     if args.config_file == 'gender':
         config = ResNetGenderMC()
         return config,GenderClassificationAttentionDataset(

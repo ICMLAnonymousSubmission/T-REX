@@ -2,7 +2,6 @@ import torch.nn.functional as F
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 from src.metrics.metrics import *
-from src.explanators.deit import VITAttentionGradRollout
 import cv2
 import numpy as np
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
@@ -11,13 +10,30 @@ import json
 import torch.nn as nn
 
 class BCEWLossConverted:
+    """
+    BCELoss with updated target.
+    """
     def __call__(self, output, target):
 
         loss = nn.BCELoss()(output,target.to(torch.float32))
         return loss
 
 class SaveRunner:
+    """
+    This runner save attention maps and image-vice metrics for eval_dataset given from explanator.
+    """
     def __init__(self, explanator, dataset,metrics):
+        """
+        ! Please don't use shuffle in dataset for this class, as order is important for it
+
+        Initialize SaveRunner
+
+        Args:
+        explanator (CAM) : pytorch-grad-cam CAM algorithm to create activation map
+        dataset_eval (Dataset): dataset on which your model will be evaluated, it should contain
+
+        metrics (list of torchmetric.Metric):  Metrics, which scores will be calculated.
+        """
         self.explanator = explanator
         self.dataset = dataset
         if isinstance(metrics, list) or isinstance(metrics, tuple):
@@ -26,16 +42,21 @@ class SaveRunner:
             self.metrics = metrics
         
     def run(self,model,epoch,save_directory):
+        """
+
+        Results will be saved in format:
+        {save_directory}/{self.exlanator.__name__}/{label_name}/{order_of_image}/{epoch}.png
+
+        Args:
+            model (torch.nn.Module): model for evaluation
+            epoch (int): Epoch
+            save_directory (str): path to save directory
+        """
         self.labels_used = [0] * 20
         self.metrics.reset()
         criterion = BCEWLossConverted()
         for q,data in enumerate(tqdm(self.dataset)):
-            label =data['label']
-            if self.labels_used[label] == 40:
-                continue
-            
-
-            
+            label =data['label']            
             self.labels_used[label]+=1
             x = data['image'].unsqueeze(0)
             targets = [ClassifierOutputTarget(label)] * 1
@@ -84,7 +105,20 @@ class SaveRunner:
             
 
 class EvalRunner:
+    """
+    This runner compute labeled metrics for eval_dataset attention mask given from explanator.
+    """
     def __init__(self, explanator, dataset, metrics, device='cpu'):
+        """
+        Initialize EvalRunner
+
+        Args:
+        explanator (CAM) : pytorch-grad-cam CAM algorithm to create activation map
+        dataset_eval (Dataset): dataset on which your model will be evaluated, it should contain
+
+        metrics (list of torchmetric.Metric):  Metrics, which scores will be calculated.
+        device (str, optional): _description_. Defaults to 'cpu'.
+        """
         self.device = device
         self.explanator = explanator
         self.dataset = dataset
@@ -97,13 +131,17 @@ class EvalRunner:
         self.length =  0
     
     def run(self):
+        """
+        Compute dataset-vise metrics given in initialization.
+
+        Returns:
+            dict - Dictionary with average value over all dataset for each metric
+        """
         self.length =  0
         self.labels_used = [0] * 20
         self.metrics.reset()
         for q,data in enumerate(tqdm(self.dataset)):
             label =data['label']
-            if self.labels_used[label] == 100:
-                continue
             self.labels_used[label]+=1
             x = data['image'].unsqueeze(0).to(self.device)
             targets = [ClassifierOutputTarget(data['label'])]
@@ -118,6 +156,13 @@ class EvalRunner:
         self.metrics.reset()
         return data
     def save_metrics(self,metrics,to_save):
+        """
+        Save results as json file for each epoch
+
+        Args:
+            metrics (dict): Dictionary returned from run function.
+            to_save (str): filepath.
+        """
         import json
         with open(to_save, 'w') as fp:
             try:
@@ -126,11 +171,25 @@ class EvalRunner:
                 json.dump({metric_name:metrics[metric_name] for metric_name in metrics}, fp)
 
 
-class LabelRunner:
-    def __init__(self, explanator, dataset,cam_metric):
+class NoLabelRunner:
+    """
+    Calculate no label metrics
+    """
+    def __init__(self, explanator, dataset,metrics):
+        """
+        ! Please don't use shuffle in dataset for this class, as order is important for it
+
+        Initialize NoLabelRunner
+
+        Args:
+        explanator (CAM) : pytorch-grad-cam CAM algorithm to create activation map
+        dataset_eval (Dataset): dataset on which your model will be evaluated, it should contain
+
+        metrics (pytorch_grad_cam.metrics) - metrics from pytorch_grad_cam module
+        """
         self.explanator = explanator
         self.dataset = dataset
-        self.cam_metric = cam_metric
+        self.metrics = metrics
         
     def run(self,model):
         self.scores_each_class = {i:[] for i in self.dataset.CLASS_LABELS_LIST}
@@ -138,15 +197,13 @@ class LabelRunner:
      
         for q,data in enumerate(tqdm(self.dataset)):
             label =data['label']
-            if self.labels_used[label] == 100:
-                continue
 
             self.labels_used[label]+=1
             x = data['image'].unsqueeze(0).cuda()
             targets = [ClassifierOutputTarget(label)] * 1
             grayscale_cams = self.explanator(input_tensor=x, targets=targets)
 
-            scores = self.cam_metric(x, grayscale_cams, targets, model)
+            scores = self.metrics(x, grayscale_cams, targets, model)
             score = scores[0].item()
             self.scores_each_class[self.dataset.CLASS_LABELS_LIST[label]].append(score)
     

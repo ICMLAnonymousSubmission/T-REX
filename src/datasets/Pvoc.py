@@ -13,13 +13,33 @@ from .utils import read_image
 from .dataset import ExplainabilityDataModule
 
 class PvocClassificationDataModule(ExplainabilityDataModule):
+    """
+    DataModule for Pvoc Classification Dataset
+
+    https://arxiv.org/abs/1801.05075
+    """
     def __init__(self, root_path: str,
                  train_resize_size: Optional[Union[int, Tuple[int, int]]] = None,
                  eval_resize_size: Optional[Union[int, Tuple[int, int]]] = None,
                  num_workers: int = -1, batch_size: int = 32):
+        """
+        Initialize PvocClassificationDataModule
+        Args:
+            root_path (str): path to the root directory
+            train_resize_size (Optional[Union[int, Tuple[int, int]]], optional): Resized train image size. Defaults to None.
+            eval_resize_size (Optional[Union[int, Tuple[int, int]]], optional): Resized evaluation and test image size. Defaults to None.
+            num_workers (int, optional): Number of workers. Defaults to -1.
+            batch_size (int, optional): Batch size. Defaults to 32.
+        """
         super(PvocClassificationDataModule, self).__init__(root_path,PvocClassificationDataset,train_resize_size,eval_resize_size,num_workers,batch_size)
 
     def setup(self, stage: Optional[str] = None) -> None:
+        """
+        Function to setup validation train and test dataset from init parameters.
+
+        Args:
+            stage (Optional[str], optional): stage. Defaults to None.
+        """
         self._train_ds = PvocClassificationDataset(self.root_path, image_set='train',
                                                    resize_size=self.train_resize_size)
         self._val_ds = PvocClassificationDataset(self.root_path, image_set='val', resize_size=self.eval_resize_size)
@@ -40,6 +60,17 @@ class PvocClassificationDataset(VOCDetection):
                  download=False,
                  target_transform=None,
                  resize_size: Optional[Union[int, Tuple[int, int]]] = None):
+        """
+        Initialize PvocClassificationDataset
+
+        Args:
+            root (str): path to directory
+            year (str, optional): year of dataset. Defaults to '2012'.
+            image_set (str, optional): which split of dataset to get. Defaults to 'train'.
+            download (bool, optional): download dataset. Defaults to False.
+            target_transform (_type_, optional): transformations for dataset. Defaults to None.
+            resize_size (Optional[Union[int, Tuple[int, int]]], optional): Resized image size. Defaults to None.
+        """
         self.resize_size = resize_size
         if isinstance(self.resize_size, int):
             self.resize_size = (self.resize_size, self.resize_size)
@@ -110,6 +141,14 @@ class PvocAttentionDataset(Dataset):
 
     def __init__(self, root_path: str,
                  resize_size: Optional[Union[int, Tuple[int, int]]] = None):
+        """
+        Initiaize PvocAttentionDataset
+
+        Args:
+            root_path (str): path to the root directory
+            split (str, optional): which split of dataset to get. Defaults to 'train'.
+            resize_size (Optional[Union[int, Tuple[int, int]]], optional): Resized image size. Defaults to None.
+        """
         self.root_path = root_path
         self.resize_size = resize_size
         if isinstance(self.resize_size, int):
@@ -124,10 +163,26 @@ class PvocAttentionDataset(Dataset):
 
 
     def __len__(self):
+        """
+        Return size of the dataset
+        Returns:
+            int: size of dataset
+        """
         return len(self.maps)
 
 
     def __getitem__(self, idx):
+        """
+        Get dataset element. 
+        Args:
+            idx (int): Index of the element
+
+        Returns:
+            dict: 
+                'image' : image,
+                'attn' : Attention map,
+                'label': label
+        """
         pair_name = list(self.maps.keys())[idx]
 
         # get image

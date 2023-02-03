@@ -11,6 +11,13 @@ class EquivariantModelCheckpoint(ModelCheckpoint):
     is exported before making a valid checkpoint
     """
     def _save_checkpoint(self, trainer: "pl.Trainer", filepath: str) -> None:
+        """
+        Save checkpoint
+
+        Args:
+            trainer (pl.Trainer): pytorch lightning trainer
+            filepath (str): path to file
+        """
         trainer.save_checkpoint(filepath, self.save_weights_only)
         torch.save({
             'model_state_dict': trainer.model.model.export().state_dict(),
@@ -26,6 +33,18 @@ class EquivariantModelCheckpoint(ModelCheckpoint):
 
 
 def get_training_callbacks(config, log_path, experiment_name, equivariant=False):
+    """
+    Get callback for training from config file.
+
+    Args:
+        config (_type_): Config file
+        log_path (_type_): path to log
+        experiment_name (_type_): name of the experiment
+        equivariant (bool, optional): Is your model is equivariant. Defaults to False.
+
+    Returns:
+        Callbacks: Callbacks, but only for training
+    """
     ckpt_callback = ModelCheckpoint
     if equivariant:
         ckpt_callback = EquivariantModelCheckpoint
@@ -47,6 +66,17 @@ def get_training_callbacks(config, log_path, experiment_name, equivariant=False)
 
 
 def get_training_loggers(config, log_path, experiment_name):
+    """
+    Get loggers for training from config file.
+
+    Args:
+        config (_type_): Config file
+        log_path (_type_): path to log
+        experiment_name (_type_): name of the experiment
+
+    Returns:
+        list of loggers
+    """
     tb_logger = TensorBoardLogger(log_path, config.task, version=experiment_name)
     csv_logger = CSVLogger(log_path, config.task, version=experiment_name)
    

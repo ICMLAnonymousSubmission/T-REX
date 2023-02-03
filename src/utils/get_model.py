@@ -5,6 +5,17 @@ from src.models.efficientnet import Efficientnet
 from src.models.visionl16 import VisionTransformer
 from src.models.deit import DEIT
 def get_model(args,num_classes,last_layer,final_activation):
+    """_summary_
+
+    Args:
+        args (_type_): argparser
+        num_classes (int): Number of classes for model
+        last_layer (bool): Should you change last layer or add new layer
+        final_activation (torch.nn): Activation function for the model
+
+    Returns:
+        torch.nn.Module - model
+    """
     if args.model == 'resnet':
         return resnet50_builder(num_classes=num_classes)
     if args.model == 'widenet':

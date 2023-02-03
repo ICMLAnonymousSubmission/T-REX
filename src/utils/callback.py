@@ -1,21 +1,25 @@
 from pytorch_lightning.callbacks import Callback
-from src.modules.runner import EvalRunner,SaveRunner,LabelRunner
-from src.explanators.deit import VITAttentionGradRollout
-import tqdm
-import torch
-from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-from pytorch_grad_cam.utils.image import show_cam_on_image
-from pytorch_grad_cam.utils.reshape_transforms import vit_reshape_transform
-import os
-import cv2
-from pytorch_grad_cam.metrics.cam_mult_image import CamMultImageConfidenceChange
-from pytorch_grad_cam.metrics.road import ROADLeastRelevantFirstAverage, ROADMostRelevantFirstAverage
+from src.modules.runner import EvalRunner,SaveRunner,NoLabelRunner
 import json
-import torch.nn as nn
 from torchmetrics import MetricCollection
+
+from pytorch_grad_cam.utils.reshape_transforms import vit_reshape_transform
+
 class ModelEvaluationCallback(Callback):
-    def __init__(self,explanator,dataset_eval,save_file,metrics,run_every_x=10):
+    """
+    This callback is used to compute labelled metrics.
+    """
+    def __init__(self,explanator,dataset_eval,save_file: str,metrics,run_every_x : int=1,reshape_transform=None):
+        """
+        Initialization of ModelEvaluationCallback
+        Args:
+            explanator (CAM): pytorch_grad_cam method to compute activation map.
+            dataset_eval (Dataset): evaluation dataset.
+            save_file (str): path to file.
+            metrics (list of Metrics or MetricCollection): collection of metrics to run.
+            run_every_x (int, optional): How often your callback will be runned. Defaults to 1.
+        """
+
         self.explanator = explanator
         
         self.dataset_eval = dataset_eval
@@ -28,18 +32,25 @@ class ModelEvaluationCallback(Callback):
         self.results = {metric_name.__class__.__name__ : [] for metric_name in metrics}
         self.run_every_x=run_every_x
         self.epoch = 0
+        self.reshape_transform=reshape_transform
     
     def on_train_epoch_start(self, trainer, pl_module):
+        """
+        This script will automatically run after each epoch.
 
+        Args:
+            trainer (pl.Trainer): Pytorch lightning trainer
+            pl_module (pl.module): Pytoch lightning module
+        """
         self.epoch+=1
         if self.run_every_x != 1 and self.epoch % self.run_every_x !=1:
             return
 
         model = pl_module
         model.eval()
-        target_layers = [model.model.model[0].blocks[-1].norm1]
+        target_layers = [model.last_conv_layer()]
 
-        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=vit_reshape_transform)
+        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=self.reshape_transform)
         cam.batch_size=40
 
      
@@ -54,7 +65,19 @@ class ModelEvaluationCallback(Callback):
 
 
 class ModelImageSaveCallback(Callback):
-    def __init__(self,explanator,dataset_eval,save_directory,metrics,run_every_x=10):
+    """
+    This callback is used to save activation map and compute image-vise metrics for each image.
+    """
+    def __init__(self,explanator,dataset_eval,save_directory,metrics,run_every_x=1,reshape_transform=None):
+        """
+        Initialization of ModelImageSaveCallback
+        Args:
+            explanator (CAM): pytorch_grad_cam method to compute activation map.
+            dataset_eval (Dataset): evaluation dataset.
+            save_file (str): path to file.
+            metrics (list of Metrics or MetricCollection): collection of metrics to run.
+            run_every_x (int, optional): How often your callback will be runned. Defaults to 1.
+        """
         self.explanator = explanator
         self.dataset_eval = dataset_eval
         self.save_directory = save_directory
@@ -64,18 +87,25 @@ class ModelImageSaveCallback(Callback):
             self.metrics = MetricCollection(*metrics)
         elif isinstance(metrics, MetricCollection):
             self.metrics = metrics
+        self.reshape_transform = reshape_transform
         
     def on_train_epoch_start(self, trainer, pl_module):
+        """
+        This script will automatically run after each epoch.
 
+        Args:
+            trainer (pl.Trainer): Pytorch lightning trainer
+            pl_module (pl.module): Pytoch lightning module
+        """
         self.epoch+=1
         if self.run_every_x != 1 and self.epoch % self.run_every_x !=1:
             return
 
         model = pl_module
         model.eval()
-        target_layers = [model.model.model[0].blocks[-1].norm1]
+        target_layers = [model.last_conv_layer()]
 
-        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=vit_reshape_transform)
+        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=self.reshape_transform)
         cam.batch_size=40
 
 
@@ -91,7 +121,19 @@ class ModelImageSaveCallback(Callback):
 
 
 class NoLabelCallback(Callback):
-    def __init__(self,explanator,dataset_eval,save_file,cam_metric,run_every_x=10):
+    """
+    This callback is used to compute no label metrics.
+    """
+    def __init__(self,explanator,dataset_eval,save_file,metrics,run_every_x=10,reshape_transform=None):
+        """
+        Initialization of NoLabelCallback
+        Args:
+            explanator (CAM): pytorch_grad_cam method to compute activation map.
+            dataset_eval (Dataset): evaluation dataset.
+            save_file (str): path to file.
+            metrics (list of Metrics or MetricCollection): collection of metrics to run.
+            run_every_x (int, optional): How often your callback will be runned. Defaults to 1.
+        """
         self.explanator = explanator
         self.dataset_eval = dataset_eval
         self.save_file = save_file
@@ -99,19 +141,27 @@ class NoLabelCallback(Callback):
         self.start = True
         self.run_every_x = run_every_x
         self.epoch = 0
-        self.cam_metric = cam_metric
+        self.cam_metric = metrics
+        self.reshape_transform = reshape_transform
     def on_train_epoch_start(self, trainer, pl_module):
+        """
+        This script will automatically run after each epoch.
+
+        Args:
+            trainer (pl.Trainer): Pytorch lightning trainer
+            pl_module (pl.module): Pytoch lightning module
+        """
         self.epoch+=1
         if self.run_every_x != 1 and self.epoch % self.run_every_x !=1:
             return
         model = pl_module
         model.eval()
-        target_layers = [model.model.model[0].blocks[-1].norm1]
+        target_layers = [model.last_conv_layer()]
 
-        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=vit_reshape_transform)
+        cam = self.explanator(model=model, target_layers=target_layers, use_cuda=True,reshape_transform=self.reshape_transform)
         cam.batch_size=40
 
-        runner = LabelRunner(explanator=cam,dataset=self.dataset_eval,cam_metric= self.cam_metric)
+        runner = NoLabelRunner(explanator=cam,dataset=self.dataset_eval,metrics= self.cam_metric)
         scores = runner.run(model)
         for i in scores:
             for j in range(len(scores[i])):

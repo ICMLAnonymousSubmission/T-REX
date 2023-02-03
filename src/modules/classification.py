@@ -13,7 +13,13 @@ class ClassificationModule(ExplainabilityModule):
     with last two pooling layers replaced by dilated convolution
     """
     def __init__(self, config,model):
+        """
+        Initialization of ClassificationModule
 
+        Args:
+            config (config): Config file
+            model (nn.Module): model for evaluation
+        """
 
         self.config = config
         # define loss function
@@ -68,6 +74,12 @@ class ClassificationModule(ExplainabilityModule):
         return backbone, classifier
         
     def configure_optimizers(self):
+        """
+        Configure optimizer for ClassificationModule model
+
+        Returns:
+            torch.optim - optimizer for your model
+        """
         try:
             backbone_params, classifier_params = self.get_parameter_groups()
             optimizer = torch.optim.Adam([

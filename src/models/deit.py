@@ -24,9 +24,12 @@ class DEIT(nn.Module):
         self.model =  deit_builder(num_classes,last_layer=last_layer)
         self.final_activation = final_activation
         self.last_conv_layer=None
+
     def forward(self, x: Tensor) -> Tensor:
         x = self.model(x)
         x = self.final_activation(x)
         return x        
 
+    def add_last_conv_layer(self):
+        self.last_conv_layer =  self.model[0].blocks[-1].norm1
 

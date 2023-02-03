@@ -2,6 +2,9 @@ import pytorch_lightning as pl
 import torch.nn.functional as F
 import torch.nn as nn
 class ExplainabilityModule(pl.LightningModule):
+    """
+    General Module for explainability
+    """
     def __init__(self, model, criterion, accuracy, augumentation=None, normalization=None):
         super(ExplainabilityModule, self).__init__()
         self.model = model

@@ -8,6 +8,12 @@ class MyAccuracy(Metric):
     '''
 
     def __init__(self,attn_threshold=0.5):
+        """
+        Initialize accuary
+
+        Args:
+            attn_threshold (float, optional): Treshould to decide if class is correct for multi-label classification. Defaults to 0.5.
+        """
         super().__init__()
         self.add_state("Accuracy", default=torch.tensor(0.0), dist_reduce_fx="mean")
         self.add_state("number_of_elements", default=torch.tensor(0.0), dist_reduce_fx="mean")
@@ -53,7 +59,10 @@ class MetricIoU(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute IoU score for given batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds,target = self.preprocessing(preds,target)
         intersection = ((preds == 1) & target).sum().item()
@@ -62,6 +71,9 @@ class MetricIoU(Metric):
         assert intersection / (union + 1e-6) <= 1.1
 
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.IoU
 
 
@@ -77,7 +89,10 @@ class MetricF1Score(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute F1 score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds, target = self.preprocessing(preds, target)
         tp = ((target == 1) & preds).sum().item()
@@ -88,6 +103,9 @@ class MetricF1Score(Metric):
         self.F1score += 2 * precision * recall / (precision + recall + 1e-6)
         assert 2 * precision * recall / (precision + recall + 1e-6) <= 1.1
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.F1score
 
 
@@ -103,7 +121,10 @@ class MetricPrecision(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute Precision score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds, target = self.preprocessing(preds, target)
         tp = ((target == 1) & preds).sum().item()
@@ -111,6 +132,9 @@ class MetricPrecision(Metric):
         self.precision += tp / (tp + fp + 1e-6)
         assert tp / (tp + fp + 1e-6)  <= 1.1
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.precision
 
 
@@ -126,7 +150,10 @@ class MetricRecall(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute Recall score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds, target = self.preprocessing(preds, target)
         tp = ((target == 1) & preds).sum().item()
@@ -136,6 +163,9 @@ class MetricRecall(Metric):
         assert recall <= 1.1
 
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.recall
 
 
@@ -146,13 +176,19 @@ class MetricMAE(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute MAE score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds = torch.nan_to_num(preds,0)
         self.mae += torch.abs(target - preds).sum().item() / \
                     (torch.ones(target.size()).sum().item() + 1e-8)
 
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.mae
 
 
@@ -163,7 +199,10 @@ class MetricMAEFP(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute MAEFP score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
 
         preds = torch.nan_to_num(preds,0)
@@ -171,6 +210,9 @@ class MetricMAEFP(Metric):
                       (torch.where(target > 0, 0, 1).sum().item() + 1e-6)
 
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.maeFP
 
 
@@ -181,12 +223,18 @@ class MetricMAEFN(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         """
-        In future this function could be redesigned to avoid additional computation
+        Compute MAEFN score for batch
+        Args:
+            preds (torch.Tensor): prediction from model
+            target (torch.Tensor): target from eval_dataset
         """
         preds = torch.nan_to_num(preds,0)
        
         self.maeFN += torch.abs(torch.where(target > 0, preds, 0) - torch.where(target > 0, target, 0)).sum().item() / \
                       (torch.where(target > 0, 1, 0).sum().item() + 1e-6)
     def compute(self):
+        """
+        Return average score overall results
+        """
         return self.maeFN
 

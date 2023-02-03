@@ -34,3 +34,6 @@ class Efficientnet(nn.Module):
         x = self.final_activation(x)
         return x        
 
+    def add_last_conv_layer(self):
+        self.last_conv_layer = self.model[0].features[-1]
+
