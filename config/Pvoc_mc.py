@@ -33,6 +33,9 @@ class PvocMC:
     seed: int = 42
     log_dir: str = '/home/User/Downloads/Sigmoid/logs'
     task: str = 'deit'
+    experiment_name = '{}'.format(
+        str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+    )
     device = 'cuda:0'
     gpus = [0]
 
@@ -71,9 +74,7 @@ class PvocMC:
 
     dataset_eval = PvocAttentionDataset(
             root_path='/home/User/datasets/data/ML-Interpretability-Evaluation-Benchmark',resize_size=eval_resize_size)
-    experiment_name = '{}'.format(
-        str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
-    )
+
     #normalization = KA.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     callbacks=[

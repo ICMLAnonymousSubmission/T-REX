@@ -1,29 +1,30 @@
 # Explainable AI
-
 This repository contains the framework for model explainability evaluation.
 
 The framework contains different labelled and unlabelled metrics to run on your model to evaluate its explainability and
 performance.
-It could perform both evaluation after training and after each epoch evaluation.
+It could perform both evaluations after training and after each epoch evaluation.
 
 In case you decide to evaluate your model during training, you will get easy to use
-json file, with results for different metrics after each epoch.
+JSON file, with results for different metrics after each epoch.
+
 
 ![](images/movie.gif)
 
 ## Content
 
 1. [Run](#Run)
-2. [ Labeled Metrics ](#Labeled metrics)
+2. [ Config ](#Config)
+2. [ Labeled Metrics ](#Labeled-metrics)
     - [ IoUscore ](#IoUScore)
     - [ Recall ](#Recall)
     - [ Precision ](#Precision)
     - [ F1Score ](#F1Score)
-    - [ Mean Absolute Error ](#Mean Absolute Error)
+    - [ Mean Absolute Error ](#Mean-Absolute-Error)
         - [ MAE ](#MAE)
         - [ MAEFN ](#MAEFN)
         - [ MAEFP ](#MAEFP)
-3. [ Unlabeled metrics ](#Unlabeled metrics)
+3. [ Unlabeled metrics ](#Unlabeled-metrics)
 4. [ Callbacks ](#Callbacks)
     - [ ModelEvaluationCallback ](#ModelEvaluationCallback)
     - [ ModelImageSaveCallback ](#ModelImageSaveCallback)
@@ -63,23 +64,52 @@ pip install -r requirements.txt
 python trainer.py --config-file scene --model mobilenet
 ```
 
-The script for training your model on 1 gpu will start, and the results with weights will be saved in
+The script for training your model on 1 GPU will start, which will save the results with weights in the specified directory:
 
 config.log_dir + '/' config.tasks + '/' + time() directory.
-
 <a name="Labeled metrics"></a>
+## Config
+   ```
+      seed - torch seed for training.
+      log_dir - directory for logging(used to get path for metrics saving).
+      task - task name(used to get path for metrics saving).
+      experiment_name - experiment name.
+      device - name of the device to train on.
+      gpus - indexes of used GPUs.
+      epochs - number of epochs.
+      grad_clip_val - gradient clip value.
+      backbone_lr - learning rate for the model backbone.
+      classifier_lr - learning rate for a model classifier.
+      scheduler_gamma - optimizer scheduler gamma(used after each epoch).
+      root_path - path to the dataset directory.
+      train_resize_size - image size for the training dataset.
+      train_crop_size - random cropping after the resize for the training dataset.
+      eval_resize_size - image size for evaluation dataset.
+      num_workers - number of workers.
+      batch_size_per_gpu - batch size per GPU.
+      num_classes - size of the last layer(number of different classes).
+      last_layer - if True, add a new layer; else, change the last layer of the model.
+      criterion - loss function
+      accuracy - not explainability metrics to calculate.
+      augmentation - augmentation for the training dataset.
+      datamodule - datamodule to get train and validation dataset.
+      metrics - explainability metrics to calculate.
+      final_activation - final activation function.
+      dataset_eval - evaluation dataset.
+      callbacks - callbacks for explainability evaluation metrics.  
+```
+## Labeled metrics<a name="Labeled-metrics"></a>
 
-## Labeled metrics
 
-Labeled metrics could be used only if you have attention mask ground truth, as they need both prediction and target to
-calculate it's value.
+Labelled metrics could be used if you have attention mask ground truth, as they need both prediction and target to
+calculate its value.
 
-This metrics designed to calculate similarity between human and model attention mask and could be used to proof your
+These metrics are designed to calculate the similarity between human and model attention masks and could be used to prove your
 model results.
+
 ![](images/change_metrics.png)
 
 <a name="IoUScore"></a>
-
 #### IoUScore
 
 Calculate IoUScore between the predicted attention map and ground truth.
@@ -109,7 +139,7 @@ tensor(0.8018)
 
 #### Recall
 
-Calculate Recall between the predicted attention map and ground truth.
+Calculate the Recall between the predicted attention map and ground truth.
 
 This metric could also be used with ModelEvaluationCallback to calculate Recall after each training epoch.
 
@@ -136,7 +166,7 @@ tensor(0.8018)
 
 #### Precision
 
-Calculate Precision between the predicted attention map and ground truth.
+Calculate the Precision between the predicted attention map and ground truth.
 
 This metric could also be used with ModelEvaluationCallback to calculate Precision after each training epoch.
 
@@ -163,7 +193,7 @@ tensor(0.7972)
 
 #### F1Score
 
-Calculate F1Score between the predicted attention map and ground truth.
+Calculate the F1Score between the predicted attention map and ground truth.
 
 This metric could also be used with ModelEvaluationCallback to calculate F1Score after each training epoch.
 
@@ -186,7 +216,7 @@ tensor(0.5037)
 tensor(0.7998)
 ```
 
-<a name="Mean Absolute Error"></a>
+<a name="Mean-Absolute-Error"></a>
 
 ### Mean Absolute Error
 
@@ -271,14 +301,14 @@ tensor(0.4998)
 
 ## Unlabeled metrics
 
-This metrics are using unlabeled data to predict model performance.
+These metrics use unlabeled data to predict model performance.
 
-The main idea of this metrics is to calculate change of confidence after removing some percent of image.
+The main idea of this metric is to calculate the confidence change after removing some per cent of the image.
 
-To do this we are using **https://pypi.org/project/grad-cam/** and all unlabeled metrics and CAM algorithms are
+To do this, we are using **https://pypi.org/project/grad-cam/**, and all unlabeled metrics and CAM algorithms are
 supported with ModelNoLabelCallback.
 
-You could read more about all this metrics on **https://jacobgil.github.io/pytorch-gradcam-book/introduction.html**
+You can read more about all these metrics on **https://jacobgil.github.io/pytorch-gradcam-book/introduction.html**
 
 ![](images/pvoc_no_label_efficientnet.png)
 
@@ -286,28 +316,32 @@ You could read more about all this metrics on **https://jacobgil.github.io/pytor
 
 ## Callbacks
 
-At the moment our framework contain three Callbacks, which could be used for after epoch evaluation.
-You could easily add this Callbacks to your torch model.
+Currently, our framework contains three Callbacks, which could be used after epoch evaluation.
+You could easily add these Callbacks to your torch model.
 
 <a name="ModelEvaluationCallback"></a>
 
 ### ModelEvaluationCallback
 
-This callback evaluate model performance, which use labels to calculate scores.
-Callback create json file, where results are saved as dictionary, with names of metric as key, and value as list of
+This callback evaluates model performance, which uses labels to calculate scores.
+Callback creates a JSON file, where results are saved as a dictionary, with names of metric as key and value as a list of
 average
-model performance on evaluation dataset on specific epoch.
+model performance on the evaluation dataset on the specific epoch.
 
-To create this class you need to set few arguments:
+To create this class, you need to set a few arguments:
+
 
 ```
-explanator - pytorch-grad-cam CAM algorithm to create activation map
-dataset_eval - dataset on which your model will be evaluated, it should contain
-both labels and ground truth activation map.
-save_file - the name for json file, where results will be saved.
+explanator - pytorch-grad-cam CAM algorithm to create an activation map
+dataset_eval - the dataset on which your model will be evaluated; it should 
+ contain both labels and ground truth activation map.
+save_file - the name of the JSON file where results will be saved.
 metrics - Metrics, which scores will be calculated,
-run_every_x(default 10) - how often do you want to run evaluate your model.
-```
+run_every_x(default 10) - how often do you want to evaluate your model
+reshape_transform - transformation in case of using transformer, for example use:
+ pytorch_grad_cam.utils.reshape_transforms.vit_reshape_transform 
+ in the case of the DEIT model
+ ```
 
 #### ModelEvaluationCallback use EvalRunner, which could be used for one time model evaluation.
 
@@ -315,36 +349,43 @@ run_every_x(default 10) - how often do you want to run evaluate your model.
 
 ### ModelImageSaveCallback
 
-This callback save attention maps and image-vice metrics for eval_dataset given from explanator.
+This callback saves attention maps and image-vice metrics for the eval_dataset given by the explanator.
 
-To create this class you need to set few arguments:
+To create this class, you need to set a few arguments:
+
 
 ```
-explanator - pytorch-grad-cam CAM algorithm to create activation map
-dataset_eval - dataset on which your model will be evaluated, it should contain
-both labels and ground truth activation map.
-save_file - the name for json file, where results will be saved.
+explanator - pytorch-grad-cam CAM algorithm to create an activation map
+dataset_eval - the dataset on which your model will be evaluated; it should 
+ contain both labels and ground truth activation map.
+save_file - the name of the JSON file where results will be saved.
 metrics - Metrics, which scores will be calculated,
-run_every_x(default 10) - how often do you want to run evaluate your model.
-```
+run_every_x(default 10) - how often do you want to evaluate your model
+reshape_transform - transformation in case of using transformer, for example use:
+ pytorch_grad_cam.utils.reshape_transforms.vit_reshape_transform 
+ in the case of the DEIT model
+ ```
 
 #### ModelImageSaveCallback use SaveRunner, which could be used for one time model evaluation.
 
 <a name="NoLabelCallback"></a>
 
 ### NoLabelCallback
+This callback calculates no label metrics for eval_dataset given by the explanator.
 
-This callback calculate no label metrics for eval_dataset given from explanator.
+To create this class, you need to set a few arguments:
 
-To create this class you need to set few arguments:
 
 ```
-explanator - pytorch-grad-cam CAM algorithm to create activation map
-dataset_eval - dataset on which your model will be evaluated, it should contain
-both labels and ground truth activation map.
-save_file - the name for json file, where results will be saved.
+explanator - pytorch-grad-cam CAM algorithm to create an activation map
+dataset_eval - the dataset on which your model will be evaluated; it should 
+ contain both labels and ground truth activation map.
+save_file - the name of the JSON file where results will be saved.
 metrics - Metrics, which scores will be calculated,
-run_every_x(default 10) - how often do you want to run evaluate your model.
+run_every_x(default 10) - how often do you want to evaluate your model
+reshape_transform - transformation in case of using transformer, for example use:
+ pytorch_grad_cam.utils.reshape_transforms.vit_reshape_transform 
+ in the case of the DEIT model
 ```
 
 #### NoLabelCallback use LabelRunner, which could be used for one time model evaluation.

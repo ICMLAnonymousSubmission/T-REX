@@ -49,18 +49,13 @@ def get_config_original(args):
     """
     if args.config_file == 'gender':
         config = ResNetGenderMC()
-        return config,GenderClassificationAttentionDataset(
-            root_path=config.root_path, split='test', resize_size=config.eval_resize_size)
-
+        return config
         
     elif args.config_file == 'pvoc':
         config = PvocMC()
 
-        return config,PvocAttentionDataset(
-            root_path='/home/bovey/datasets/data/ML-Interpretability-Evaluation-Benchmark',resize_size=config.eval_resize_size)
-    
+        return config
     
     elif args.config_file == 'scene':
         config = SceneMC()
-        return config,SceneClassificationAttentionDataset(
-                root_path=config.root_path, split='test', resize_size=config.eval_resize_size)
+        return config

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-file", help="Config File")
     parser.add_argument("--model", help="Config File")
-    config,dataset = get_config_original(parser.parse_args())
+    config = get_config_original(parser.parse_args())
     torch.manual_seed(config.seed)
     torch.use_deterministic_algorithms(True)
     model_name = get_model(parser.parse_args(),config.num_classes,config.last_layer,final_activation=config.final_activation)
