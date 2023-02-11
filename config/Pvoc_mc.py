@@ -10,17 +10,13 @@ from src.datasets.Pvoc import PvocClassificationDataModule
 from src.metrics.metrics import *
 import torch.nn.functional as F
 from src.utils.callback import ModelEvaluationCallback,ModelImageSaveCallback,NoLabelCallback
-
-from src.explanators.vit import VitAttention
-from src.explanators.deit import VITAttentionGradRollout
-from captum.attr import LayerGradCam
 from src.datasets.Pvoc import PvocAttentionDataset
 from datetime import datetime
 
 from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad,LayerCAM
 from pytorch_grad_cam.metrics.road import ROADLeastRelevantFirstAverage, ROADMostRelevantFirstAverage,ROADLeastRelevantFirst,ROADMostRelevantFirst
 from pytorch_grad_cam.metrics.cam_mult_image import CamMultImageConfidenceChange
-
+from pytorch_grad_cam.utils.reshape_transforms import vit_reshape_transform
 class BCEWLossConverted:
     def __call__(self, output, target):
 
@@ -33,9 +29,6 @@ class PvocMC:
     seed: int = 42
     log_dir: str = '/home/User/Downloads/Sigmoid/logs'
     task: str = 'deit'
-    experiment_name = '{}'.format(
-        str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
-    )
     device = 'cuda:0'
     gpus = [0]
 
@@ -74,23 +67,25 @@ class PvocMC:
 
     dataset_eval = PvocAttentionDataset(
             root_path='/home/User/datasets/data/ML-Interpretability-Evaluation-Benchmark',resize_size=eval_resize_size)
-
+    experiment_name = '{}'.format(
+        str(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+    )
     #normalization = KA.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     callbacks=[
-    #ModelEvaluationCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlus.json'),metrics=metrics,run_every_x=1),
-    #ModelEvaluationCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAM.json'),metrics=metrics,run_every_x=1),
+    #ModelEvaluationCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlus.json'),metrics=metrics,run_every_x=1,),
+    #ModelEvaluationCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAM.json'),metrics=metrics,run_every_x=1,reshape_transform=vit_reshape_transform),
     ModelEvaluationCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAM.json'),metrics=metrics,run_every_x=5),
 
-    #NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadLeast.json'),cam_metric = ROADLeastRelevantFirst(percentile=90),run_every_x=10),
-    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadLeast.json'),cam_metric = ROADLeastRelevantFirst(percentile=90),run_every_x=5),
-    #NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=5),
-    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=5),
-    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelConfidenceChange.json'),cam_metric = CamMultImageConfidenceChange(),run_every_x=5),
-    NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelConfidenceChange.json'),cam_metric = CamMultImageConfidenceChange(),run_every_x=5),
-    NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=5),
-    ModelImageSaveCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=5),   
-    #ModelImageSaveCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=1),
+    #NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadLeast.json'),metrics = ROADLeastRelevantFirst(percentile=90),run_every_x=10),
+    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadLeast.json'),metrics = ROADLeastRelevantFirst(percentile=90),run_every_x=5,reshape_transform=vit_reshape_transform),
+    #NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=5),
+    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=5),
+    #NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelConfidenceChange.json'),metrics = CamMultImageConfidenceChange(),run_every_x=5),
+    #NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelConfidenceChange.json'),metrics = CamMultImageConfidenceChange(),run_every_x=5),
+    NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=5),
+    ModelImageSaveCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=5,),
+    #ModelImageSaveCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=1,reshape_transform=vit_reshape_transform),
     #ModelImageSaveCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=1),
    
 

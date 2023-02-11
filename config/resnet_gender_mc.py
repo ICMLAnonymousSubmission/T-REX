@@ -28,7 +28,7 @@ class ResNetGenderMC:
     """Config for ResNet-50 training on binary gender classification task"""
     seed: int = 12
     log_dir: str = '/home/User/Downloads/gender_sigmoid/logs'
-    task: str = 'efficientnet_gender_mc'
+    task: str = 'deit'
     device = 'cuda:0'
     gpus = [0]
     # training
@@ -43,7 +43,7 @@ class ResNetGenderMC:
     train_crop_size: int = 224
     eval_resize_size: int = 224
     num_workers: int = 16
-    batch_size_per_gpu: int = 16
+    batch_size_per_gpu: int = 64
     accuracy = MetricCollection([MyAccuracy(attn_threshold=0.5)])
 
     num_classes: int = 2
@@ -74,13 +74,13 @@ class ResNetGenderMC:
         ModelEvaluationCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAM.json'),metrics=metrics,run_every_x=1),
         ModelEvaluationCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAM.json'),metrics=metrics,run_every_x=10),
       
-        NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadLeast.json'),cam_metric = ROADLeastRelevantFirst(percentile=90),run_every_x=10),
-        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadLeast.json'),cam_metric = ROADLeastRelevantFirst(percentile=90),run_every_x=5),
-        NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=5),
-        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=5),
-        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelConfidenceChange.json'),cam_metric = CamMultImageConfidenceChange(),run_every_x=5),
-        NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelConfidenceChange.json'),cam_metric = CamMultImageConfidenceChange(),run_every_x=10),
-        NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelRoadMost.json'),cam_metric = ROADMostRelevantFirst(percentile=90),run_every_x=10),
+        NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadLeast.json'),metrics = ROADLeastRelevantFirst(percentile=90),run_every_x=10),
+        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadLeast.json'),metrics = ROADLeastRelevantFirst(percentile=90),run_every_x=5),
+        NoLabelCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'GradCAMPlusPlusNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=5),
+        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=5),
+        NoLabelCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'LayerCAMNoLabelConfidenceChange.json'),metrics  = CamMultImageConfidenceChange(),run_every_x=5),
+        NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelConfidenceChange.json'),metrics = CamMultImageConfidenceChange(),run_every_x=10),
+        NoLabelCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_file = os.path.join(log_dir,task,experiment_name,f'ScoreCAMNoLabelRoadMost.json'),metrics = ROADMostRelevantFirst(percentile=90),run_every_x=10),
         ModelImageSaveCallback(explanator=ScoreCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=10),   
         ModelImageSaveCallback(explanator=LayerCAM,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=1),
         ModelImageSaveCallback(explanator=GradCAMPlusPlus,dataset_eval=dataset_eval,save_directory = os.path.join(log_dir,task,experiment_name,f'photos'),metrics=metrics,run_every_x=1),

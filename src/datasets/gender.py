@@ -125,7 +125,6 @@ class GenderClassificationAttentionDataset(Dataset):
 
         # parse attention maps into data frame
         image_list = glob.glob(pjoin(root_path, split, '*', '*.jpg'))
-        print(pjoin(root_path, split, '*', '*.jpg'))
         df = pd.Series(image_list, name='path')
         df = pd.DataFrame(df)
         df['id'] = df['path'].str.split('/').str[-1].str[:-4]

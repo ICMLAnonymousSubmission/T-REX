@@ -56,7 +56,7 @@ class SaveRunner:
         self.metrics.reset()
         criterion = BCEWLossConverted()
         for q,data in enumerate(tqdm(self.dataset)):
-            label =data['label']            
+            label =data['label']
             self.labels_used[label]+=1
             x = data['image'].unsqueeze(0)
             targets = [ClassifierOutputTarget(label)] * 1

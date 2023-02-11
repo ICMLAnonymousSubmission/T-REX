@@ -24,6 +24,9 @@ if __name__ == '__main__':
     torch.use_deterministic_algorithms(True)
     model_name = get_model(parser.parse_args(),config.num_classes,config.last_layer,final_activation=config.final_activation)
     model = ClassificationModule(config, model_name)
+    model.model.add_last_conv_layer()
+
+    
     if os.environ.get('LOCAL_RANK', 0) == 0:
         experiment_name = config.experiment_name
         log_path = os.path.join(config.log_dir, config.task, experiment_name)

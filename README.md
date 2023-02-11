@@ -1,11 +1,11 @@
 # Explainable AI
 This repository contains the framework for model explainability evaluation.
 
-The framework contains different labelled and unlabelled metrics to run on your model to evaluate its explainability and
+The framework contains different labeled and unlabeled metrics to run on your model to evaluate its explainability and
 performance.
-It could perform both evaluations after training and after each epoch evaluation.
+It can perform evaluations both after training and after each epoch.
 
-In case you decide to evaluate your model during training, you will get easy to use
+In case you decide to evaluate your model during training, you can choose easy to use
 JSON file, with results for different metrics after each epoch.
 
 
@@ -31,17 +31,17 @@ JSON file, with results for different metrics after each epoch.
     - [ NoLabelCallback ](#NoLabelCallback)
 
 ## Run<a name="Run"></a>
-- Download dataset from these sites:
+- Download datasets from these sites:
 
-Pvoc: https://github.com/SinaMohseni/ML-Interpretability-Evaluation-Benchmark
+PascalVoC (saliency annotated subset) [[2]](#2): https://github.com/SinaMohseni/ML-Interpretability-Evaluation-Benchmark
 
-Gender:  https://drive.google.com/file/d/1Mt9k5Qfcp4tYqWuq7xWhf76QHLyYPDft/view?usp=sharing
+Gender [[1]](#1):  https://drive.google.com/file/d/1Mt9k5Qfcp4tYqWuq7xWhf76QHLyYPDft/view?usp=sharing
 
-Scene: https://drive.google.com/file/d/1ULF6UAcg9Yvy3fa50dV8H4I9ZJFAW-SK/view?usp=sharing
+Scene [[1]](#1): https://drive.google.com/file/d/1ULF6UAcg9Yvy3fa50dV8H4I9ZJFAW-SK/view?usp=sharing
 
-- Change paths into config file to the path, where you download your datasets
+- Change paths in the config files to the paths, where you downloaded your datasets
 
-- Run following script
+- Run the following script
 
 Pvoc:
 
@@ -64,9 +64,36 @@ pip install -r requirements.txt
 python trainer.py --config-file scene --model mobilenet
 ```
 
-The script for training your model on 1 GPU will start, which will save the results with weights in the specified directory:
+The script for training your model will start, the results with weights will be saved in the specified directory:
 
 config.log_dir + '/' config.tasks + '/' + time() directory.
+
+Adversarial training:
+```commandline
+pip install -r requirements.txt
+python adversarial_trainer.py
+```
+(currently for PascalVoC only, detailed configuration in config\adv_resnet_pvoc_mc.py):
+adapted from https://github.com/microsoft/robust-models-transfer
+
+
+For evaluation only use runner.py script with available models:
+
+```commandline
+pip install -r requirements.txt
+python runner.py --config-file [pvoc or scene or gender] --model [any available model]
+```
+available model options:
+```
+'resnet' - resnet50
+'adversarial_resnet50' - resnet50 version that allows adversarial training
+'widenet' - equivariant wide resnet version
+'mobilenet' - mobilenet-v3
+'efficientnet' - efficientNet
+'vision16' - Vision Transformer model
+'deit' - DEIT transformer model
+```
+
 <a name="Labeled metrics"></a>
 ## Config
    ```
@@ -98,13 +125,16 @@ config.log_dir + '/' config.tasks + '/' + time() directory.
       dataset_eval - evaluation dataset.
       callbacks - callbacks for explainability evaluation metrics.  
 ```
+For adversarial config file options in config\adv_resnet_pvoc_mc.py see details in
+https://robustness.readthedocs.io/en/latest/example_usage/training_lib_part_1.html
+
 ## Labeled metrics<a name="Labeled-metrics"></a>
 
 
-Labelled metrics could be used if you have attention mask ground truth, as they need both prediction and target to
-calculate its value.
+Labelled metrics can be used if you have attention mask ground truth, as they need both prediction and target to
+calculate the value.
 
-These metrics are designed to calculate the similarity between human and model attention masks and could be used to prove your
+These metrics are designed to calculate the similarity between human and model attention masks and can be used to prove your
 model results.
 
 ![](images/change_metrics.png)
@@ -114,7 +144,7 @@ model results.
 
 Calculate IoUScore between the predicted attention map and ground truth.
 
-This metric could also be used with ModelEvaluationCallback to calculate IoUScore after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate IoUScore after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;IoUScore=\frac{AreaOfOverlap}{AreaOfUnion})
 
@@ -141,7 +171,7 @@ tensor(0.8018)
 
 Calculate the Recall between the predicted attention map and ground truth.
 
-This metric could also be used with ModelEvaluationCallback to calculate Recall after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate Recall after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;Recall=\frac{TP}{TP+FN+eps})
 
@@ -168,7 +198,7 @@ tensor(0.8018)
 
 Calculate the Precision between the predicted attention map and ground truth.
 
-This metric could also be used with ModelEvaluationCallback to calculate Precision after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate Precision after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;Precision=\frac{TP}{TP+FP+eps})
 
@@ -195,7 +225,7 @@ tensor(0.7972)
 
 Calculate the F1Score between the predicted attention map and ground truth.
 
-This metric could also be used with ModelEvaluationCallback to calculate F1Score after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate F1Score after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;F1Score=\frac{2*Precision*Recall}{Precision+Recall++eps})
 
@@ -226,7 +256,7 @@ tensor(0.7998)
 
 Compute mean absolute error between the predicted attention map and ground truth.
 
-This metric could also be used with ModelEvaluationCallback to calculate MAE after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate MAE after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;MAE=\frac{\sum_{i=1}^{n}|x_i-y_i|}{n})
 
@@ -250,9 +280,9 @@ tensor(0.5012)
 #### MAEFN
 
 Compute mean absolute error between the predicted attention map and ground truth, but only for indexes where ground
-truth equal to 0.
+truth is equal to 0.
 
-This metric could also be used with ModelEvaluationCallback to calculate MAEFN after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate MAEFN after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a} y_i=0](https://latex.codecogs.com/svg.latex?\Large&space;MAEFN=\frac{\sum_{i=1}^{n}|x_i-y_i|}{n},y_i=0)
 
@@ -276,9 +306,9 @@ tensor(0.5001)
 #### MAEFP
 
 Compute mean absolute error between the predicted attention map and ground truth, but only for indexes where ground
-truth **not** equal to 0.
+truth is **not** equal to 0.
 
-This metric could also be used with ModelEvaluationCallback to calculate MAEFP after each training epoch.
+This metric can also be used with ModelEvaluationCallback to calculate MAEFP after each training epoch.
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;MAEFP=\frac{\sum_{i=1}^{n}|x_i-y_i|}{n},y_i!=0)
 
@@ -303,7 +333,7 @@ tensor(0.4998)
 
 These metrics use unlabeled data to predict model performance.
 
-The main idea of this metric is to calculate the confidence change after removing some per cent of the image.
+The main idea of this metric is to calculate the confidence change after removing some percent of the image.
 
 To do this, we are using **https://pypi.org/project/grad-cam/**, and all unlabeled metrics and CAM algorithms are
 supported with ModelNoLabelCallback.
@@ -316,8 +346,8 @@ You can read more about all these metrics on **https://jacobgil.github.io/pytorc
 
 ## Callbacks
 
-Currently, our framework contains three Callbacks, which could be used after epoch evaluation.
-You could easily add these Callbacks to your torch model.
+Currently, our framework contains three Callbacks, which can be used after epoch evaluation.
+You can easily add these Callbacks to your torch model.
 
 <a name="ModelEvaluationCallback"></a>
 
@@ -343,7 +373,7 @@ reshape_transform - transformation in case of using transformer, for example use
  in the case of the DEIT model
  ```
 
-#### ModelEvaluationCallback use EvalRunner, which could be used for one time model evaluation.
+#### ModelEvaluationCallback use EvalRunner, which can be used for one time model evaluation.
 
 <a name="ModelImageSaveCallback"></a>
 
@@ -366,7 +396,7 @@ reshape_transform - transformation in case of using transformer, for example use
  in the case of the DEIT model
  ```
 
-#### ModelImageSaveCallback use SaveRunner, which could be used for one time model evaluation.
+#### ModelImageSaveCallback use SaveRunner, which can be used for one time model evaluation.
 
 <a name="NoLabelCallback"></a>
 
@@ -388,14 +418,16 @@ reshape_transform - transformation in case of using transformer, for example use
  in the case of the DEIT model
 ```
 
-#### NoLabelCallback use LabelRunner, which could be used for one time model evaluation.
+#### NoLabelCallback use LabelRunner, which can be used for one time model evaluation.
 
-## License
+## References
 
-For open source projects, say how it is licensed.
+<a id="1">[1]</a> 
+RES: A Robust Framework for Guiding Visual Explanation,
+Gao, Yuyang and Sun, Tong Steven and Bai, Guangji and Gu, Siyi and Hong, Sungsoo Ray and Zhao, Liang. 
+Proceedings of the 28th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining,
+August 2022,ACM 
 
-## Project status
-
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has
-slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or
-owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+<a id="2">[2]</a>
+@Quantitative Evaluation of Machine Learning Explanations: A Human-Grounded Benchmark, 
+Mohseni, Sina and Block, Jeremy E and Ragan, Eric D, arXiv preprint arXiv:1801.05075, 2020

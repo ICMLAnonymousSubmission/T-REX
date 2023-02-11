@@ -1,4 +1,5 @@
 from src.models.resnet import resnet50_builder
+from src.models.robust_resnet import RobustResNet
 from src.models.equivariant_WRN import Wide_ResNet
 from src.models.mobilenetv3 import MobileNet
 from src.models.efficientnet import Efficientnet
@@ -18,6 +19,8 @@ def get_model(args,num_classes,last_layer,final_activation):
     """
     if args.model == 'resnet':
         return resnet50_builder(num_classes=num_classes)
+    if args.model == 'adversarial_resnet50':
+        return RobustResNet(num_classes=num_classes, final_activation=final_activation)
     if args.model == 'widenet':
         return Wide_ResNet(10, 6, 0.3, initial_stride=1, N=8, f=True, r=0, num_classes=num_classes)
 
